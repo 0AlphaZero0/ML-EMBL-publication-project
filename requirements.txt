@@ -1,0 +1,7 @@
+joblib==0.14.1
+pycountry==19.8.18
+numpy==1.15.4
+geonamescache==1.1.0
+requests==2.22.0
+spacy==2.0.16
+tqdm==4.40.2
