@@ -4,9 +4,9 @@
 # 26/02/2020
 ########################
 import geonamescache # Allows to use data from Geonames database (http://www.geonames.org/)
-import joblib
-import json
-import numpy
+import joblib # Used to save and load machine learning models in files (https://joblib.readthedocs.io/en/latest/)
+import json # Used to load json from url response (https://docs.python.org/3/library/json.html)
+import numpy # 
 import os
 import pycountry# Allows to load a dictionnary of iso-2 iso3 country codes
 import re
@@ -49,8 +49,8 @@ replacements=[ #List of tuples for string preparation (regex pattern, replacemen
     (r'\s.\s',' '),
     (r'^[0-9]+\s|^\s[0-9]+\s',''),
     (r'^\s+',''),
-    ('Electronic address\s*:',''),
-    ('Current address\s*:','')]
+    (r'Electronic address\s*:',''),
+    (r'Current address\s*:','')]
 EMBL_RORs=[ #List of ROR IDs for the different EMBL sites
     "https://ror.org/00yx5cw48", # Australia 1st
     "https://ror.org/050589e39", # Hamburg
@@ -125,26 +125,6 @@ def gen_list_extract(var, key):
         for d in var:
             yield from gen_list_extract(d, key)
 
-def listener(q): #### Here the function listen calls from multiprocessing
-    """This function is a function that limit the problem of writing in the same file with different process runing at the same time
-    Description : 
-            Here this script use multiprocessing to get in a faster way some results. And write those results in a file, one problem is that different process want to access the same file.
-            This function allow to create a queue of process who want to write in the file.
-    Args :
-            q (multiprocessing.Manager().Queue()) : 
-                    A queue of process
-    Return :
-            No return
-    """
-    with open(directory+"result.txt", 'w') as f:
-        while 1:
-            m = q.get()
-            if m == 'kill':
-                f.write('killed')
-                break
-            f.write(str(m) + '\n')
-            f.flush()
-
 def main(): #### Create a queue of process, each process will process a chunk of PMIDs
     """This function process a list of chunk containing diverse PMIDs
     Description :
@@ -159,8 +139,6 @@ def main(): #### Create a queue of process, each process will process a chunk of
     manager=Manager()
     q=manager.Queue()
     pool=Pool(cpu_count()+2)
-    watcher=pool.apply_async(listener,(q,))
-    jobs=[]
     for i in tqdm.tqdm(pool.imap_unordered(process,PMIDs),total=len(PMIDs)):
         EMBL_pmids+=i[0]
         for si in i[1]:
@@ -193,8 +171,7 @@ def process(sublist): #### Extract PMIDs from a sublist
         "EMBL Hamburg":[],
         "EMBL Heidelberg":[],
         "EMBL Nordic":[],
-        "EMBL Rome":[],
-        "OTHERS":[]}
+        "EMBL Rome":[]}
     affiliated=[]
     postm={
         "query":"EXT_ID:"+str(" OR EXT_ID:".join(sublist)),
@@ -216,8 +193,7 @@ def process(sublist): #### Extract PMIDs from a sublist
                     "EMBL Hamburg":False,
                     "EMBL Heidelberg":False,
                     "EMBL Nordic":False,
-                    "EMBL Rome":False,
-                    "OTHERS":False}
+                    "EMBL Rome":False}
                 pmid=result["pmid"]
                 try:
                     for author in result["authorList"]["author"]:
@@ -236,6 +212,7 @@ def process(sublist): #### Extract PMIDs from a sublist
                         except KeyError:
                             continue
                 except (KeyError, TypeError, IndexError) as error:
+                    print(str(error))
                     pass
                 if aff==True:
                     affiliated.append(pmid)
@@ -272,7 +249,7 @@ def is_EMBL(request,site=False,proba=False): #### Predict if request is EMBL and
                             "substring":""}    (string)
     """
     patterns=[";","EMBL","EBI","European","European Molecular Biology","European Bioinformatics Institute"]
-    EMBL_obvious=r"[^0-9a-zA-Z]*(EMBL)[^0-9a-zA-Z]*|[^0-9a-zA-Z]*(EBI)[^0-9a-zA-Z]*|[^0-9a-zA-Z]*(European Molecular Biology Laboratory)[^0-9a-zA-Z]*|[^0-9a-zA-Z]*(European Bioinformatics Institute)[^0-9a-zA-Z]*"
+    # EMBL_obvious=r"[^0-9a-zA-Z]*(EMBL)[^0-9a-zA-Z]*|[^0-9a-zA-Z]*(EBI)[^0-9a-zA-Z]*|[^0-9a-zA-Z]*(European Molecular Biology Laboratory)[^0-9a-zA-Z]*|[^0-9a-zA-Z]*(European Bioinformatics Institute)[^0-9a-zA-Z]*"
     result={
         "choose":False,
         "method":"",
@@ -513,10 +490,10 @@ def get_geoloc_from(request,cities=False,other=False,all_mention=False): #### Ex
 
 if __name__=='__main__':
     abrevs={ ### Dictionary of countries abreviations often met 
-    'UK':'United Kingdom',
-    'USA':'United States',
-    "US":'United States',
-    'Czech':"Czech Republic"}
+        'UK':'United Kingdom',
+        'USA':'United States',
+        "US":'United States',
+        'Czech':"Czech Republic"}
     gc=geonamescache.GeonamesCache() # load data from geonamescache
     countries_list = [*gen_list_extract(gc.get_countries(), 'name')] # Creation of Countries list
     countries_iso2 = {}
@@ -536,8 +513,7 @@ if __name__=='__main__':
         "EMBL Hamburg":[],
         "EMBL Heidelberg":[],
         "EMBL Nordic":[],
-        "EMBL Rome":[],
-        "OTHERS":[]}
+        "EMBL Rome":[]}
     # File reading
     if ".txt" in search_file or ".csv" in search_file:
         with open(directory+search_file,"r",encoding="utf-8") as file:
@@ -554,7 +530,7 @@ if __name__=='__main__':
     print("Computing time: "+str(end-start))
     print("Number of EMBL publications found: "+str(len(EMBL_pmids)))
     for si in Sites:
-        file=si.replace(" ","_").replace("-","_").replace("OTHERS","EMBL_OTHERS")
+        file=si.replace(" ","_").replace("-","_")
         x=0
         NA=[]
         PMID_EMBL_only=[]
@@ -623,4 +599,3 @@ if __name__=='__main__':
                 f.write(str(RESULTS_PMIDS[pmid]["Partnership"]))
                 f.write("\n")
     save("EMBL_PMIDs",EMBL_pmids)
-    os.remove(directory+"result.txt")
