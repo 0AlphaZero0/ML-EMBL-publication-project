@@ -39,7 +39,9 @@ At this time there are 6 different sites and 2 partnerships :
 - Nordic (partnership)
 - Rome
 
-The prototype used two machine learning models and two vectorizer built during the FREYA project. All this project is described in **[Confluence](https://img.shields.io/badge/Confluence-FREYA%2FEMBL%20project-green)**
+The prototype used two machine learning models and two vectorizer built during the ***[FREYA project](https://www.project-freya.eu/en/about/mission)***. This work has been made for the [deliverable 4.6](https://www.project-freya.eu/en/resources/project-output).
+
+All this project is described in **[`Confluence`](https://img.shields.io/badge/Confluence-FREYA%2FEMBL%20project-green)**
 
 ## Running
 As described before, the prototype needs a list of PMIDs. This list can be in a file provide by the user or a string directly wrote in the script.
